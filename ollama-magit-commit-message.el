@@ -67,19 +67,18 @@
 ;;   - Heavy (14b)
 
 ;;; Code:
-(package-initialize
+(package-initialize)
 
- (require 'magit))
+(require 'magit)
 (require 'magit-commit)
 (require 'transient)
 (require 'git-commit)
 
-;;; ---------------------------------------------------------------------------
-;;; Customization
+
 (defgroup ollama-magit-commit-message nil
   "Integrate tavernari/git-commit-message with Magit."
   :group 'magit
-  :prefix "ollama-magit-commit-message-"))
+  :prefix "ollama-magit-commit-message-")
 
 (defcustom ollama-magit-commit-message-executable "git-gen-commit"
   "Path or name of the tavernari/git-commit-message executable.
@@ -90,7 +89,6 @@ path, e.g. \"/usr/local/bin/git-gen-commit\"."
   :type 'string
   :group 'ollama-magit-commit-message)
 
-;;; ---------------------------------------------------------------------------
 (defvar ollama-magit-commit-message--pending-message nil
   "Commit message waiting to be inserted into the next git-commit buffer.
 Set by the process sentinel and consumed (then cleared) by
@@ -108,8 +106,9 @@ so it never fires a second time."
     (save-excursion
       (goto-char (point-min))
       (insert ollama-magit-commit-message--pending-message)
-      (unless (string-suffix-p "\n" ollama-magit-commit-message--pending-message)
-        (insert "\n")))
+      (unless (string-suffix-p "\n"
+			       ollama-magit-commit-message--pending-message)
+	(insert "\n")))
     (goto-char (point-min))
     (end-of-line)
     (setq ollama-magit-commit-message--pending-message nil)))
@@ -123,33 +122,33 @@ time `ollama-magit-commit-message-generate-commit-message' is called."
     (let ((output-buf (process-buffer proc)))
       (cond
        ((string= event "finished\n")
-        (let ((msg (with-current-buffer output-buf
-                     (string-trim (buffer-string)))))
-          (kill-buffer output-buf
-		       (if (string-empty-p msg
-					   (message "Ollama-magit-commit-message: \
-git-gen-commit produced no output — nothing to insert"))
-			   (message "Ollama-magit-commit-message: \
+	(let ((msg (with-current-buffer output-buf
+		     (string-trim (buffer-string)))))
+	  (kill-buffer output-buf)
+	  (if (string-empty-p msg)
+	      (message "Ollama-magit-commit-message: \
+git-gen-commit produced no output — nothing to insert")
+	    (message "Ollama-magit-commit-message: \
 message generated, opening commit editor…")
-			 (setq ollama-magit-commit-message--pending-message msg)
-			 (add-hook 'git-commit-setup-hook
-				   #'ollama-magit-commit-message--insert-pending-message)
-			 (let ((default-directory repo-root))
-			   (magit-commit-create '()))))))
+	    (setq ollama-magit-commit-message--pending-message msg)
+	    (add-hook 'git-commit-setup-hook
+		      #'ollama-magit-commit-message--insert-pending-message)
+	    (let ((default-directory repo-root))
+	      (magit-commit-create '())))))
 
        ((string-prefix-p "exited abnormally" event)
-        (let ((err (with-current-buffer output-buf
-                     (string-trim (buffer-string)))))
-          (kill-buffer output-buf)
-          (message "Ollama-magit-commit-message: git-gen-commit failed — %s"
-                   (if (string-empty-p err) event err))))
+	(let ((err (with-current-buffer output-buf
+		     (string-trim (buffer-string)))))
+	  (kill-buffer output-buf)
+	  (message "Ollama-magit-commit-message: git-gen-commit failed — %s"
+		   (if (string-empty-p err) event err))))
 
        (t
-        (when (buffer-live-p output-buf)
-          (kill-buffer output-buf))
-        (message "Ollama-magit-commit-message: \
+	(when (buffer-live-p output-buf)
+	  (kill-buffer output-buf))
+	(message "Ollama-magit-commit-message: \
 git-gen-commit process ended unexpectedly (%s)"
-                 (string-trim event)))))))
+		 (string-trim event)))))))
 
 ;;;###autoload
 (defun ollama-magit-commit-message-generate-commit-message (&optional args)
@@ -163,15 +162,15 @@ otherwise the default (8B) model is used.
 The function is non-blocking: git-gen-commit runs as a subprocess and
 Emacs remains fully responsive.  The commit editor opens automatically
 when the model finishes."
-  
+
   (interactive (list (transient-args 'ollama-magit-commit-message-transient)))
   (unless (executable-find ollama-magit-commit-message-executable)
     (user-error "Ollama-magit-commit-message: cannot find `%s' on PATH — \
 is git-gen-commit installed?"
-                ollama-magit-commit-message-executable))
+		ollama-magit-commit-message-executable))
   (let* ((use-mini      (member "--model=mini" args))
 	 (use-pro       (member "--model=pro" args))
-         (model         (cond
+	 (model         (cond
 			 (use-mini "mini")
 			 (use-pro "pro")
 			 (t "default")))
@@ -192,13 +191,13 @@ running git-gen-commit (%s model)…" model)
 (transient-define-prefix ollama-magit-commit-message-transient ()
   "Generate a Git commit message using tavernari/git-gen-commit (Ollama).
 
-Default (8B, 40k context) is used by default. However, the creator of
+Default (8B, 40k context) is used by default.  However, the creator of
 git-commit-message recommends using mini (4B, 256k context — fast and
 suitable for most diffs) for most commits.  Toggle -m to use it.
 
 Toggle -d to use the pro (14B, 40k context) model for more accurate messages on
 complex or large diffs, or on commits involving many files."
-  
+
   ["Options:"
    ("-m" "Use mini (4B) model" "--model=default")
    ("-p" "Use pro (14B) model" "--model=pro")
