@@ -1,0 +1,80 @@
+* Ollama Magit Commit Message
+
+** Description
+
+Ollama integration for Magit via tavernari/git-commit-message
+
+#+begin_comment
+Copyright (C) 2026, Loeffler, Colin (that1guycolin)
+Created date: 2026-03-05
+
+Author: Loeffler, Colin <that1guycolin@gmail.com>
+URL: https://github.com/that1guycolin/ollama-magit-commit-message
+Version: 0.1.0
+Package-Requires: ((emacs "29.1") (magit "4.5.0") (transient "0.12.0"))
+Keywords: ollama git-commit-message tavernari magit git-gen-commit
+#+end_comment
+
+Integrates tavernari/git-commit-message (Ollama) with Magit.  Adds an entry to the magit-commit
+transient that asynchronously generates a commit message and places it in the COMMIT_EDITMSG 
+
+*** Installation
+
+**** Elpaca
+
+#+begin_src emacs-lisp
+  (elpaca (ollama-magit-commit-message
+  	 :host github
+  	 :repo that1guycolin/ollama-magit-commit-message
+  	 :files (:defaults)))
+
+  ;; With `elpaca-use-package'
+  (use-package ollama-magit-commit-message
+    :ensure (ollama-magit-commit-message
+  	   :host github
+  	   :repo that1guycolin/ollama-magit-commit-message
+  	   :files (:defaults))
+    :after magit)
+#+end_src
+
+**** Manual (add to load-path)
+
+#+begin_src emacs-lisp
+  (add-to-list 'load-path /directory/containing/ollama-magit-commit-message.el)
+  (require 'ollama-magit-commit-message)
+
+  ;; with `use-package'
+  (use-package ollama-magit-commit-message
+    :ensure nil
+    :after magit
+    :load-path "/directory/containing/ollama-magit-commit-message.el")
+#+end_src
+
+**** Requirements
+
+- magit
+- [[https://ollama.com/tavernari/git-commit-message][git-commit-message]] installed and on $PATH
+- Ollama running locally
+
+*** Usage
+
+In the Magit status buffer, press 'c' to open the commit transient. Press 'g' to
+open the git-commit-message sub-transient (OPTIONAL: use `-m' or `-p' to select
+a different model).
+
+Pressing 'g' in the sub-transient starts git-commit-message asynchronously.
+Emacs stays fully responsive while the model runs.  When it finishes, the Magit
+commit editor opens with the generated message already inserted.
+
+**** Available Models
+
+| Name         | Size | Context | Notes                                   |
+| Mini (4b)    | ~4B  | 256K    | Use in most situations                  |
+| Default (8b) | ~8B  | 40K     | All-purpose, but likely too heavy for   |
+|              |      |         |most commits.                            |
+| Pro          | ~14B | 40K     | Appropriate for large commits involving |
+|              |      |         |multiple files.                          |
+
+** License
+
+GPL-3.0
